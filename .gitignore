@@ -1,8 +1,2 @@
 /.env
 /node_modules
-
-
-STEP 1: Install Auth Dependencies
-
-npm install bcryptjs jsonwebtoken
-npm install --save-dev @types/jsonwebtoken @types/bcryptjs
