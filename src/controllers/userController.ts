@@ -3,7 +3,7 @@ import { User } from "../models/user";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// ✅ Register a new user
+//  Register a new user
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { email, password, registrationNumber, fieldOfStudy, role } = req.body;
@@ -21,7 +21,7 @@ export const registerUser = async (req: Request, res: Response) => {
       password: hashedPassword,
       registrationNumber,
       fieldOfStudy,
-      role: role || "user", // default role
+      role: role || "user", 
     });
 
     // Sign token
@@ -35,7 +35,7 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Login user
+// Login user
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -56,7 +56,7 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Get all users (admin only)
+// Get all users (admin only)
 export const getAllUsers = async (_: Request, res: Response) => {
   try {
     const users = await User.find().select("-password");
@@ -66,7 +66,7 @@ export const getAllUsers = async (_: Request, res: Response) => {
   }
 };
 
-// ✅ Get user by ID
+// Get user by ID
 export const getUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
@@ -77,7 +77,7 @@ export const getUser = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Update user by ID (profile/settings)
+// Update user by ID (profile/settings)
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const updated = await User.findByIdAndUpdate(req.params.id, req.body, {
@@ -89,7 +89,7 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Delete user by ID (account deletion)
+//  Delete user by ID (account deletion)
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     await User.findByIdAndDelete(req.params.id);
