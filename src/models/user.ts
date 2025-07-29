@@ -1,55 +1,30 @@
-import mongoose, { Schema, Document, model } from "mongoose";
+// models/user.ts
+import mongoose, { Schema, Document } from "mongoose";
 
-// Define the user interface
 export interface IUser extends Document {
+  name: string;
   email: string;
   password: string;
   registrationNumber: string;
-  fieldOfStudy: string;
+  course: string;
+  enrollmentYear: number;
+  status: "Active" | "Graduated" | "Dropped";
   role: string;
-  year:number;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
-// Define the user schema
-const userSchema = new Schema<IUser>(
-  {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
-    password: {
-      type: String,
-      required: true,
-      minlength: 6,
-    },
-    registrationNumber: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    fieldOfStudy: {
-      type: String,
-      required: true,
-    },
-    year: {
-      type: Number,
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ["user", "admin"],
-      default: "user",
-    },
+const userSchema = new Schema<IUser>({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  registrationNumber: { type: String, required: true },
+  course: { type: String, required: true },
+  enrollmentYear: { type: Number, required: true },
+  status: {
+    type: String,
+    enum: ["Active", "Graduated", "Dropped"],
+    default: "Active",
   },
-  {
-    timestamps: true, 
-  }
-);
+  role: { type: String, default: "user" },
+});
 
-export const User = model<IUser>("User", userSchema);
+export const User = mongoose.model<IUser>("User", userSchema);

@@ -1,43 +1,52 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import { connectDB } from '../../../lib/db';
 import { User } from '../../../models/user';
 
 connectDB();
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const token = req.headers.authorization?.split(' ')[1];
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
   if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+    return res.status(401).json({ message: 'Authorization token missing or malformed' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error("JWT_SECRET not set");
+
+    const decoded = jwt.verify(token, secret) as { id: string };
+
     const userId = decoded.id;
 
-    if (req.method === 'GET') {
-      const user = await User.findById(userId).select('-password');
-      if (!user) return res.status(404).json({ message: 'User not found' });
-      return res.status(200).json(user);
-    }
+    switch (req.method) {
+      case 'GET': {
+        const user = await User.findById(userId).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        return res.status(200).json(user);
+      }
 
-    if (req.method === 'PUT') {
-      const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
-        new: true,
-      }).select('-password');
-      return res.status(200).json({ message: 'Profile updated', user: updatedUser });
-    }
+      case 'PUT': {
+        const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
+          new: true,
+        }).select('-password');
+        if (!updatedUser) return res.status(404).json({ message: 'User not found to update' });
+        return res.status(200).json({ message: 'Profile updated', user: updatedUser });
+      }
 
-    if (req.method === 'DELETE') {
-      await User.findByIdAndDelete(userId);
-      return res.status(200).json({ message: 'Account deleted' });
-    }
+      case 'DELETE': {
+        const deletedUser = await User.findByIdAndDelete(userId);
+        if (!deletedUser) return res.status(404).json({ message: 'User not found to delete' });
+        return res.status(200).json({ message: 'Account deleted' });
+      }
 
-    return res.status(405).json({ message: 'Method not allowed' });
+      default:
+        return res.status(405).json({ message: `Method ${req.method} not allowed` });
+    }
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid token' });
+    console.error("Token verification or DB operation failed:", error);
+    return res.status(403).json({ message: 'Invalid or expired token' });
   }
-};
-
-export default handler;
+}

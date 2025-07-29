@@ -35,7 +35,7 @@ const createAdmin = async () => {
         role: "admin",
         year: 2025, 
         fieldOfStudy: "Admin", 
-        registrationNumber: "221011234" 
+        registrationNumber: "ADM001" 
       });
 
       console.log("✅ Admin user created");

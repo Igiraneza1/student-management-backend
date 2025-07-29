@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import dotenv from "dotenv";
 
-// Load .env variables
+// Load environment variables
 dotenv.config();
 
-// Extend the Request type to include user
+// Extend Express Request to include user
 interface AuthRequest extends Request {
   user?: {
     id: string;
@@ -20,29 +20,39 @@ export const authenticate = (
 ) => {
   const authHeader = req.headers.authorization;
 
-  // Check if Authorization header exists and starts with 'Bearer'
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Missing or invalid token" });
+  // Check if header is present and starts with "Bearer "
+  if (!authHeader || !/^Bearer\s+/i.test(authHeader)) {
+    return res.status(401).json({ message: "Missing or invalid Authorization header" });
   }
 
-  // Extract the token from the header
+  // Extract token
   const token = authHeader.split(" ")[1];
 
+  if (!token) {
+    return res.status(401).json({ message: "Token not found" });
+  }
+
   try {
-    // Verify token using JWT_SECRET from .env
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as {
-      id: string;
-      role: string;
+    // Verify token with secret
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET not set in environment");
+    }
+
+    const decoded = jwt.verify(token, secret) as JwtPayload & { id: string; role: string };
+
+    // Optional: check token expiration
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+      return res.status(401).json({ message: "Token has expired" });
+    }
+
+    // Attach decoded user info to request
+    req.user = {
+      id: decoded.id,
+      role: decoded.role,
     };
 
-    // Attach user data to the request object
-    req.user = decoded;
-
-    // Continue to next middleware or controller
-    next();
+    next(); // Proceed to next middleware or route
   } catch (error) {
     console.error("JWT verification error:", error);
     return res.status(403).json({ message: "Token verification failed" });

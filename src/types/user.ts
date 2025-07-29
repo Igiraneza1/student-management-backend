@@ -1,8 +1,10 @@
-export interface IUser {
+export default interface User {
+  id: string;
+  name: string;
   email: string;
-  password: string;
   registrationNumber: string;
-  fieldOfStudy: string;
-  year: Number;
-  role: "user" | "admin";
+  course: string;
+  enrollmentYear: number;
+  status: "Active" | "Graduated" | "Dropped";
+  role: string;
 }
