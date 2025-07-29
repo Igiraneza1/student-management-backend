@@ -7,6 +7,7 @@ export interface IUser extends Document {
   registrationNumber: string;
   fieldOfStudy: string;
   role: string;
+  year:number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -36,6 +37,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
     },
+    year: {
+      type: Number,
+      required: true,
+    },
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -43,9 +48,8 @@ const userSchema = new Schema<IUser>(
     },
   },
   {
-    timestamps: true, // Automatically add createdAt and updatedAt
+    timestamps: true, 
   }
 );
 
-// Export the model
 export const User = model<IUser>("User", userSchema);

@@ -3,5 +3,6 @@ export interface IUser {
   password: string;
   registrationNumber: string;
   fieldOfStudy: string;
+  year: Number;
   role: "user" | "admin";
 }

@@ -17,7 +17,7 @@ app.use(express.json());
 
 setupSwagger(app);
 
-app.use('/api/v1/users', userRoutes);
+app.use("/api/v1/users", userRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
