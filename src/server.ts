@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { connectDB } from "./config/db";
 import userRoutes from "./routes/userRoutes";
 import { setupSwagger } from './config/swagger';
-import { User } from "./models/user.ts"; 
+import { User } from "./models/user"; 
 import bcrypt from 'bcryptjs';
 
 dotenv.config();
@@ -24,28 +24,29 @@ const PORT = process.env.PORT || 5000;
 
 const createAdmin = async () => {
   try {
-    const existingAdmin = await User.findOne({ role: "admin" });
+    const existingAdmin = await User.findOne({ email: "admin@example.com" });
+
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 10);
-
-      await User.create({
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      const admin = new User({
         name: "Admin",
-        email: process.env.ADMIN_EMAIL || "admin@example.com",
+        email: "admin@example.com",
         password: hashedPassword,
+        registrationNumber: "ADM001",
+        fieldOfStudy: "System Admin",
+        year: 2024,
         role: "admin",
-        year: 2025, 
-        fieldOfStudy: "Admin", 
-        registrationNumber: "ADM001" 
       });
-
+      await admin.save();
       console.log("✅ Admin user created");
     } else {
       console.log("ℹ️ Admin already exists");
     }
-  } catch (error) {
-    console.error("❌ Error creating admin:", error);
+  } catch (err) {
+    console.error("❌ Error creating admin:", err);
   }
 };
+
 
 connectDB().then(() => {
   createAdmin(); 
