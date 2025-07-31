@@ -2,29 +2,81 @@ import { Request, Response } from 'express';
 import User from '../models/user';
 import Student from '../models/student';
 import generateToken from '../config/jwt';
-import { IRequest } from '../interfaces/request';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import bcrypt from 'bcryptjs'; // <- needed for login password compare
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/profiles/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'profile-' + uniqueSuffix + ext);
+  }
+});
+
+const fileFilter = (req: any, file: any, cb: any) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+export const upload = multer({ 
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 } 
+});
+
 export const registerUser = async (req: Request, res: Response) => {
-  const { name, email, password, phone, role, course, enrollmentYear } = req.body;
-
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+    console.log('Request body:', req.body);
+
+    const { name, email, password, phone, role, course, enrollmentYear } = req.body;
+
+    const requiredFields = ['name', 'email', 'password', 'role'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(', ')}`
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'Email already registered'
+      });
     }
 
     const user = await User.create({
       name,
       email,
       password,
-      phone,
+      phone: phone || null,
       role
     });
 
     if (role === 'student') {
+      if (!course || !enrollmentYear) {
+        await User.deleteOne({ _id: user._id });
+        return res.status(400).json({
+          success: false,
+          message: 'Course and enrollment year required for students'
+        });
+      }
+
       await Student.create({
         user: user._id,
         course,
@@ -32,39 +84,61 @@ export const registerUser = async (req: Request, res: Response) => {
       });
     }
 
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user.id.toString(), user.role)
+    const token = generateToken(user._id.toString(), user.role);
+
+    return res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
+
   } catch (error) {
-    res.status(500).json({ message: (error as Error).message });
+    console.error('Registration error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during registration',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
-// @desc    Authenticate user
-// @route   POST /api/auth/login
-// @access  Public
 export const loginUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
   try {
-    const user = await User.findOne({ email });
-    
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user.id.toString(), user.role)
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    const token = generateToken(user._id.toString(), user.role);
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
   } catch (error) {
-    res.status(500).json({ message: (error as Error).message });
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: 'Server error during login' });
   }
 };

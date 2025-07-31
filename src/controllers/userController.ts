@@ -1,9 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/user';
 
-// @desc    Get user profile
-// @route   GET /api/users/me
-// @access  Private
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.user?._id).select('-password');
@@ -18,9 +15,6 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/me
-// @access  Private
 export const updateCurrentUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findByIdAndUpdate(
