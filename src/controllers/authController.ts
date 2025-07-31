@@ -6,6 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs'; // <- needed for login password compare
+import { IUser } from '../interfaces/user';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -66,7 +67,7 @@ export const registerUser = async (req: Request, res: Response) => {
       password,
       phone: phone || null,
       role
-    });
+    }) as IUser;
 
     if (role === 'student') {
       if (!course || !enrollmentYear) {
@@ -102,7 +103,7 @@ export const registerUser = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error during registration',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };

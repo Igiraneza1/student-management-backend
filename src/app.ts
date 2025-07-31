@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import studentRoutes from './routes/studentRoutes';
 import userRoutes from './routes/userRoutes';
 import errorHandler from './middleware/error';
+import { setupSwagger } from './config/swagger';
 
 const app = express();
 
@@ -18,6 +19,9 @@ app.use(express.json());
 app.use('/api/auth', authRoutes); 
 app.use('/api/students', studentRoutes);
 app.use('/api/users', userRoutes);
+
+// Setup Swagger documentation
+setupSwagger(app);
 
 app.use(errorHandler);
 

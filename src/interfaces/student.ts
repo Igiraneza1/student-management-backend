@@ -1,15 +1,12 @@
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+import mongoose from 'mongoose';
 
 export interface IStudent extends Document {
-  name: string;
-  email: string;
-  registrationNumber: string;
+  _id: Types.ObjectId;
+  user: mongoose.Types.ObjectId;
   course: string;
   enrollmentYear: number;
   status: 'Active' | 'Graduated' | 'Dropped';
-  role: 'student' | 'admin';
-  password: string;
-  comparePassword(candidatePassword: string): Promise<boolean>;
   createdAt: Date;
   updatedAt: Date;
 }
