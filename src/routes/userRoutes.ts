@@ -1,36 +1,11 @@
-import express from "express";
-import { updateUserRole } from "../controllers/userController";
-import { isAdmin } from "../middleware/admin";
-import { authenticate } from "../middleware/auth";
-
-import {
-  registerUser,
-  loginUser,
-  getAllUsers,
-  getUser,
-  updateUser,
-  deleteUser,
-  getUserProfile,
-  updateUserProfile,
-  deleteUserProfile,
-} from "../controllers/userController";
-import { authenticate } from "../middleware/auth";
+import express from 'express';
+import { getCurrentUser, updateCurrentUser } from '../controllers/userController';
+import { protect } from '../middleware/auth';
 
 const router = express.Router();
 
-// Public routes
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-
-// Protected routes
-
-router.get("/", authenticate, getAllUsers);
-router.get("/profile", authenticate, getUserProfile);
-router.put("/profile", authenticate, updateUserProfile);
-router.delete("/profile", authenticate, deleteUserProfile);
-router.put("/:id/role", authenticate, isAdmin, updateUserRole);
-router.get("/:id", authenticate, getUser);
-router.put("/:id", authenticate, updateUser);
-router.delete("/:id", authenticate, deleteUser);
+router.route('/me')
+  .get(protect, getCurrentUser)
+  .put(protect, updateCurrentUser);
 
 export default router;

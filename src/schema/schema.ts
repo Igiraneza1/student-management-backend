@@ -1,8 +1,0 @@
-name: { type: String, required: true },
-email: { type: String, required: true, unique: true },
-registrationNumber: { type: String, required: true },
-course: { type: String, required: true },
-enrollmentYear: { type: Number, required: true },
-status: { type: String, enum: ['Active', 'Graduated', 'Dropped'], default: 'Active' },
-role: { type: String, default: 'student' },
-password: { type: String, required: true },
